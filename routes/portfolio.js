@@ -85,5 +85,32 @@ router.get('/holdings', async (req, res) => {
     }
 });
 
+router.get('/returns', async (req, res) => {
+    try {
+        const portfolio = await Portfolio.findOne({}).populate('trades');
+        if (!portfolio) {
+            return res.status(404).json({ success: false, message: "Portfolio not found" });
+        }
+
+        let totalInvestment = 0;
+        let totalValue = 0;
+
+        portfolio.trades.forEach(trade => {
+            if (trade.type === 'buy') {
+                totalInvestment += trade.quantity * trade.price;
+            } else if (trade.type === 'sell') {
+                totalValue += trade.quantity * 100; // Assuming final price is 100
+            }
+        });
+
+        const cumulativeReturn = (totalValue - totalInvestment) / totalInvestment;
+
+        res.json({ success: true, data: { cumulativeReturn } });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+
 
 module.exports = router;
